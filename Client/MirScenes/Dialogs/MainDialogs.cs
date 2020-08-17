@@ -3736,7 +3736,9 @@ namespace Client.MirScenes.Dialogs
             };
             SkillModeOn.Click += (o, e) =>
             {
-                GameScene.Scene.ChangeSkillMode(false);
+                Settings.SkillMode = true;
+                GameScene.Scene.ChatDialog.ReceiveChat("<SkillMode 2>", ChatType.Hint);
+                ToggleSkillButtons(false);
             };
 
             //ctrl option
@@ -3751,7 +3753,9 @@ namespace Client.MirScenes.Dialogs
             };
             SkillModeOff.Click += (o, e) =>
             {
-                GameScene.Scene.ChangeSkillMode(true);
+                Settings.SkillMode = false;
+                GameScene.Scene.ChatDialog.ReceiveChat("<SkillMode 1>", ChatType.Hint);
+                ToggleSkillButtons(true);
             };
 
             SkillBarOn = new MirButton

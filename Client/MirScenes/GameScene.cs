@@ -545,7 +545,21 @@ namespace Client.MirScenes
                         ItemRentalDialog.Toggle();
                         break;
                     case KeybindOptions.ChangePetmode:
-                        ChangePetMode();
+                        switch (PMode)
+                        {
+                            case PetMode.Both:
+                                Network.Enqueue(new C.ChangePMode { Mode = PetMode.MoveOnly });
+                                return;
+                            case PetMode.MoveOnly:
+                                Network.Enqueue(new C.ChangePMode { Mode = PetMode.AttackOnly });
+                                return;
+                            case PetMode.AttackOnly:
+                                Network.Enqueue(new C.ChangePMode { Mode = PetMode.None });
+                                return;
+                            case PetMode.None:
+                                Network.Enqueue(new C.ChangePMode { Mode = PetMode.Both });
+                                return;
+                        }
                         break;
                     case KeybindOptions.PetmodeBoth:
                         Network.Enqueue(new C.ChangePMode { Mode = PetMode.Both });
@@ -566,7 +580,27 @@ namespace Client.MirScenes
                         Network.Enqueue(new C.IntelligentCreaturePickup { MouseMode = true, Location = MapControl.MapLocation });
                         break;
                     case KeybindOptions.ChangeAttackmode:
-                        ChangeAttackMode();
+                        switch (AMode)
+                        {
+                            case AttackMode.Peace:
+                                Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.Group });
+                                return;
+                            case AttackMode.Group:
+                                Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.Guild });
+                                return;
+                            case AttackMode.Guild:
+                                Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.EnemyGuild });
+                                return;
+                            case AttackMode.EnemyGuild:
+                                Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.RedBrown });
+                                return;
+                            case AttackMode.RedBrown:
+                                Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.All });
+                                return;
+                            case AttackMode.All:
+                                Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.Peace });
+                                return;
+                        }
                         break;
                     case KeybindOptions.AttackmodePeace:
                         Network.Enqueue(new C.ChangeAMode { Mode = AttackMode.Peace });
