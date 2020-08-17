@@ -90,7 +90,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Server\Server.Library.csproj" />
+    <ProjectReference Include="..\Server\Server.Library.csproj">
+      <Project>{AF5F4517-CE06-4D20-9BFF-1860C6604021}</Project>
+      <Name>Server.Library</Name>
+    </ProjectReference>
     <Compile Include="Account\PlayerInfoForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -339,6 +342,10 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <ProjectReference Include="..\Shared\Shared.csproj">
+      <Project>{19625ca5-42f9-4bf5-aa1c-c8dfd4eb7833}</Project>
+      <Name>Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">

@@ -11,7 +11,6 @@ using Client.MirGraphics;
 using Client.MirNetwork;
 using Client.MirObjects;
 using Client.MirSounds;
-using Microsoft.DirectX.Direct3D;
 using Font = System.Drawing.Font;
 using S = ServerPackets;
 using C = ClientPackets;
@@ -488,7 +487,7 @@ namespace Client.MirScenes.Dialogs
                 Index = 197,
                 HoverIndex = 198,
                 Library = Libraries.Prguse2,
-                Location = new Point(218, 35),
+                Location = new Point(219, 35),
                 Parent = this,
                 PressedIndex = 199,
                 Sound = SoundList.ButtonA
@@ -505,7 +504,7 @@ namespace Client.MirScenes.Dialogs
                 Index = 207,
                 HoverIndex = 208,
                 Library = Libraries.Prguse2,
-                Location = new Point(218, 284),
+                Location = new Point(219, 284),
                 Parent = this,
                 PressedIndex = 209,
                 Sound = SoundList.ButtonA
@@ -524,7 +523,7 @@ namespace Client.MirScenes.Dialogs
                 Index = 205,
                 HoverIndex = 206,
                 Library = Libraries.Prguse2,
-                Location = new Point(218, 49),
+                Location = new Point(219, 49),
                 Parent = this,
                 PressedIndex = 206,
                 Movable = true,
@@ -638,7 +637,7 @@ namespace Client.MirScenes.Dialogs
                 PositionBar.Visible = true;
                 int h = 233 - PositionBar.Size.Height;
                 h = (int)((h / (float)(Goods.Count - 8)) * StartIndex);
-                PositionBar.Location = new Point(218, 49 + h);
+                PositionBar.Location = new Point(219, 49 + h);
             }
             else
                 PositionBar.Visible = false;
@@ -664,7 +663,7 @@ namespace Client.MirScenes.Dialogs
         }
         private void PositionBar_OnMoving(object sender, MouseEventArgs e)
         {
-            const int x = 218;
+            const int x = 219;
             int y = PositionBar.Location.Y;
             if (y >= 282 - PositionBar.Size.Height) y = 282 - PositionBar.Size.Height;
             if (y < 49) y = 49;
@@ -872,9 +871,9 @@ namespace Client.MirScenes.Dialogs
                     GameScene.Scene.ChatDialog.ReceiveChat(GameLanguage.LowGold, ChatType.System);
                     break;
                 case PanelType.Consign:
-                    if (TargetItem.Info.Bind.HasFlag(BindMode.DontStore))
+                    if (TargetItem.Info.Bind.HasFlag(BindMode.DontStore) || TargetItem.Info.Bind.HasFlag(BindMode.DontSell))
                     {
-                        GameScene.Scene.ChatDialog.ReceiveChat("Cannot store this item.", ChatType.System);
+                        GameScene.Scene.ChatDialog.ReceiveChat("Cannot consign this item.", ChatType.System);
                         return;
                     }
                     MirAmountBox box = new MirAmountBox("Consignment Price:", TargetItem.Image, Globals.MaxConsignment, Globals.MinConsignment)
