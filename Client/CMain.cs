@@ -14,7 +14,7 @@ using Client.MirGraphics;
 using Client.MirNetwork;
 using Client.MirScenes;
 using Client.MirSounds;
-using Microsoft.DirectX.Direct3D;
+using SlimDX.Direct3D9;
 using Font = System.Drawing.Font;
 
 namespace Client
@@ -32,13 +32,20 @@ namespace Client
         public static DateTime Now { get { return StartTime.AddMilliseconds(Time); } }
         public static readonly Random Random = new Random();
 
-        public static bool DebugOverride;
+        public static string DebugText = "";
 
         private static long _fpsTime;
         private static int _fps;
         public static int FPS;
 
+        public static long PingTime;
+        public static long NextPing = 10000;
+
         public static bool Shift, Alt, Ctrl, Tilde;
+        public static double BytesSent, BytesReceived;
+
+
+
         public static KeyBindSettings InputKeys = new KeyBindSettings();
 
         public CMain()
@@ -80,6 +87,7 @@ namespace Client
                 
                 DXManager.Create();
                 SoundManager.Create();
+                CenterToScreen();
             }
             catch (Exception ex)
             {
@@ -139,14 +147,6 @@ namespace Client
             catch (Exception ex)
             {
                 SaveError(ex.ToString());
-            }
-            if (e.KeyCode == Keys.F10)
-            {
-                e.Handled = true;
-                if (GameScene.Scene != null)
-                {
-                    GameScene.Scene.F10();
-                }
             }
         }
         public static void CMain_MouseMove(object sender, MouseEventArgs e)
@@ -323,9 +323,13 @@ namespace Client
                 MirAnimatedButton.Animations[i].UpdateOffSet();
 
             CreateHintLabel();
-            CreateDebugLabel();
- 
+
+            if (Settings.DebugMode)
+            {
+                CreateDebugLabel();
+            }
         }
+
         private static void RenderEnvironment()
         {
             try
@@ -351,8 +355,9 @@ namespace Client
                     DXManager.Device.Present();
                 }
             }
-            catch (DeviceLostException)
+            catch (Direct3D9Exception ex)
             {
+                DXManager.DeviceLost = true;
             }
             catch (Exception ex)
             {
@@ -364,61 +369,21 @@ namespace Client
 
         private static void CreateDebugLabel()
         {
-            if (!Settings.DebugMode) return;
-
-            if (DebugBaseLabel == null || DebugBaseLabel.IsDisposed)
-            {
-                DebugBaseLabel = new MirControl
-                    {
-                        BackColour = Color.FromArgb(50, 50, 50),
-                        Border = true,
-                        BorderColour = Color.Black,
-                        DrawControlTexture = true,
-                        Location = new Point(5, 5),
-                        NotControl = true,
-                        Opacity = 0.5F
-                    };
-            }
-            
-            if (DebugTextLabel == null || DebugTextLabel.IsDisposed)
-            {
-                DebugTextLabel = new MirLabel
-                {
-                    AutoSize = true,
-                    BackColour = Color.Transparent,
-                    ForeColour = Color.White,
-                    Parent = DebugBaseLabel,
-                };
-
-                DebugTextLabel.SizeChanged += (o, e) => DebugBaseLabel.Size = DebugTextLabel.Size;
-            }
-
-            if (DebugOverride) return;
-            
             string text;
+
             if (MirControl.MouseControl != null)
             {
                 text = string.Format("FPS: {0}", FPS);
 
                 if (MirControl.MouseControl is MapControl)
-                {
                     text += string.Format(", Co Ords: {0}", MapControl.MapLocation);
 
-                    //text += "\r\n";
-
-                    //var cell = GameScene.Scene.MapControl.M2CellInfo[MapControl.MapLocation.X, MapControl.MapLocation.Y];
-
-                    //if (cell != null)
-                    //{
-                    //    text += string.Format("BackImage : {0}. BackIndex : {1}. MiddleImage : {2}. MiddleIndex {3}. FrontImage : {4}. FrontIndex : {5}", cell.BackImage, cell.BackIndex, cell.MiddleImage, cell.MiddleIndex, cell.FrontImage, cell.FrontIndex);
-                    //}
-                }
-
                 if (MirScene.ActiveScene is GameScene)
-                {
-                    //text += "\r\n";
                     text += string.Format(", Objects: {0}", MapControl.Objects.Count);
-                }
+
+                if (MirScene.ActiveScene is GameScene && !string.IsNullOrEmpty(DebugText))
+                    text += string.Format(", Debug: {0}", DebugText);
+
                 if (MirObjects.MapObject.MouseObject != null)
                 {
                     text += string.Format(", Target: {0}", MirObjects.MapObject.MouseObject.Name);
@@ -432,23 +397,57 @@ namespace Client
             {
                 text = string.Format("FPS: {0}", FPS);
             }
-            
 
-            DebugTextLabel.Text = text;
-        }
+            text += string.Format(", Ping: {0}", PingTime);
 
-        public static void SendDebugMessage(string text)
-        {
-            if (!Settings.DebugMode) return;
+            text += string.Format(", Sent: {0}, Received: {1}", Functions.ConvertByteSize(BytesSent), Functions.ConvertByteSize(BytesReceived));
 
-            if (DebugBaseLabel == null || DebugTextLabel == null)
+            if (Settings.FullScreen)
             {
-                CreateDebugLabel();
+                if (DebugBaseLabel == null || DebugBaseLabel.IsDisposed)
+                {
+                    DebugBaseLabel = new MirControl
+                    {
+                        BackColour = Color.FromArgb(50, 50, 50),
+                        Border = true,
+                        BorderColour = Color.Black,
+                        DrawControlTexture = true,
+                        Location = new Point(5, 5),
+                        NotControl = true,
+                        Opacity = 0.5F
+                    };
+                }
+
+                if (DebugTextLabel == null || DebugTextLabel.IsDisposed)
+                {
+                    DebugTextLabel = new MirLabel
+                    {
+                        AutoSize = true,
+                        BackColour = Color.Transparent,
+                        ForeColour = Color.White,
+                        Parent = DebugBaseLabel,
+                    };
+
+                    DebugTextLabel.SizeChanged += (o, e) => DebugBaseLabel.Size = DebugTextLabel.Size;
+                }
+
+                DebugTextLabel.Text = text;
             }
+            else
+            {
+                if (DebugBaseLabel != null && DebugBaseLabel.IsDisposed == false)
+                {
+                    DebugBaseLabel.Dispose();
+                    DebugBaseLabel = null;
+                }
+                if (DebugTextLabel != null && DebugTextLabel.IsDisposed == false)
+                {
+                    DebugTextLabel.Dispose();
+                    DebugTextLabel = null;
+                }
 
-            DebugOverride = true;
-
-            DebugTextLabel.Text = text;
+                Program.Form.Text = $"{GameLanguage.GameName} - {text}";
+            }
         }
 
         private static void CreateHintLabel()
@@ -514,9 +513,15 @@ namespace Client
             Program.Form.FormBorderStyle = Settings.FullScreen ? FormBorderStyle.None : FormBorderStyle.FixedDialog;
 
             DXManager.Parameters.Windowed = !Settings.FullScreen;
-            DXManager.Device.Reset(DXManager.Parameters);
+
             Program.Form.ClientSize = new Size(Settings.ScreenWidth, Settings.ScreenHeight);
-        }//
+
+            DXManager.ResetDevice();
+
+            if (MirScene.ActiveScene == GameScene.Scene)
+                GameScene.Scene.MapControl.FloorValid = false;
+            GameScene.Scene.TextureValid = false;
+        }
 
         public void CreateScreenShot()
         {
@@ -572,16 +577,15 @@ namespace Client
         {
             if (Settings.ScreenWidth == width && Settings.ScreenHeight == height) return;
 
-            DXManager.Device.Clear(ClearFlags.Target, Color.Black, 0, 0);
-            DXManager.Device.Present();
-
-            DXManager.Device.Dispose();
-
             Settings.ScreenWidth = width;
             Settings.ScreenHeight = height;
             Program.Form.ClientSize = new Size(width, height);
 
-            DXManager.Create();
+            DXManager.Device.Clear(ClearFlags.Target, Color.Black, 0, 0);
+            DXManager.Device.Present();
+            DXManager.ResetDevice();
+
+            Program.Form.CenterToScreen();
         }
             
 
@@ -665,6 +669,20 @@ namespace Client
                 GameScene.Scene.ChatDialog.ReceiveChat(string.Format(GameLanguage.CannotLeaveGame, (GameScene.LogTime - CMain.Time) / 1000), ChatType.System);
                 e.Cancel = true;
             }
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x0112) // WM_SYSCOMMAND
+            {
+                if (m.WParam.ToInt32() == 0xF100) // SC_KEYMENU
+                {
+                    m.Result = IntPtr.Zero;
+                    return;
+                }
+            }
+
+            base.WndProc(ref m);
         }
     }
 }

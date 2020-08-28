@@ -631,15 +631,14 @@ namespace Server.MirEnvir
         public void Process()
         {
             ProcessRespawns();
-            //process doors
+
             for (int i = 0; i < Doors.Count; i++)
             {
                 if ((Doors[i].DoorState == 2) && (Doors[i].LastTick + 5000 < Envir.Time))
                 {
                     Doors[i].DoorState = 0;
-                    //broadcast that door is closed
-                    Broadcast(new S.Opendoor() { DoorIndex = Doors[i].index, Close = true }, Doors[i].Location);
 
+                    Broadcast(new S.Opendoor() { DoorIndex = Doors[i].index, Close = true }, Doors[i].Location);
                 }
             }
 
@@ -675,6 +674,7 @@ namespace Server.MirEnvir
                     Lightning.Spawned();
                 }
             }
+
             if ((Info.Fire) && Envir.Time > FireTime)
             {
                 FireTime = Envir.Time + Envir.Random.Next(3000, 15000);
@@ -728,7 +728,6 @@ namespace Server.MirEnvir
                     InactiveCount = 0;
                 }
             }
-
         }
 
         private void ProcessRespawns()
@@ -770,10 +769,11 @@ namespace Server.MirEnvir
                         {
                             respawn.ErrorCount++;
 
-                            File.AppendAllText(Path.Combine(Settings.ErrorPath, "SpawnErrors.txt"),
-                                String.Format("[{5}]Failed to spawn: mapindex: {0} ,mob info: index: {1} spawncoords ({2}:{3}) range {4}", respawn.Map.Info.Index, respawn.Info.MonsterIndex, respawn.Info.Location.X, respawn.Info.Location.Y, respawn.Info.Spread, DateTime.Now)
-                                       + Environment.NewLine);
-                            //*/
+                            Logger.GetLogger(LogType.Spawn).Info($"Failed to spawn: " +
+                                $"mapindex: {respawn.Map.Info.Index}, " +
+                                $"mob info: index: {respawn.Info.MonsterIndex}, " +
+                                $"spawncoords ({respawn.Info.Location.X}:{respawn.Info.Location.Y}), " +
+                                $"range {respawn.Info.Spread}");
                         }
 
                     }
