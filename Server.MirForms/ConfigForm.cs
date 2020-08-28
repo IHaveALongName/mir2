@@ -129,9 +129,7 @@ namespace Server
         private void VPathBrowseButton_Click(object sender, EventArgs e)
         {
             if (VPathDialog.ShowDialog() == DialogResult.OK)
-            {
-                VPathTextBox.Text = string.Join(",", VPathDialog.FileNames);
-            }
+                VPathTextBox.Text = VPathDialog.FileName;
         }
 
         private void Resolution_textbox_TextChanged(object sender, EventArgs e)

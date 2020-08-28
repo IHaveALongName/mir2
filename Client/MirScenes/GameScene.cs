@@ -11,8 +11,7 @@ using Client.MirGraphics;
 using Client.MirNetwork;
 using Client.MirObjects;
 using Client.MirSounds;
-using SlimDX;
-using SlimDX.Direct3D9;
+using Microsoft.DirectX.Direct3D;
 using Font = System.Drawing.Font;
 using S = ServerPackets;
 using C = ClientPackets;
@@ -109,7 +108,7 @@ namespace Client.MirScenes
         public ItemRentalDialog ItemRentalDialog;
 
         public BuffDialog BuffsDialog;
-
+        
         public KeyboardLayoutDialog KeyboardLayoutDialog;
 
         public static List<ItemInfo> ItemInfoList = new List<ItemInfo>();
@@ -152,6 +151,9 @@ namespace Client.MirScenes
         public long ToggleTime;
         public static bool Slaying, Thrusting, HalfMoon, CrossHalfMoon, DoubleSlash, TwinDrakeBlade, FlamingSword;
         public static long SpellTime;
+
+        public long PingTime;
+        public long NextPing = 10000;
 
         public MirLabel[] OutputLines = new MirLabel[10];
         public List<OutPutMessage> OutputMessages = new List<OutPutMessage>();
@@ -199,7 +201,7 @@ namespace Client.MirScenes
             MountDialog = new MountDialog { Parent = this, Visible = false };
             FishingDialog = new FishingDialog { Parent = this, Visible = false };
             FishingStatusDialog = new FishingStatusDialog { Parent = this, Visible = false };
-
+            
             GroupDialog = new GroupDialog { Parent = this, Visible = false };
             GuildDialog = new GuildDialog { Parent = this, Visible = false };
 
@@ -221,9 +223,9 @@ namespace Client.MirScenes
             ChatNoticeDialog = new ChatNoticeDialog { Parent = this, Visible = false };
 
             QuestListDialog = new QuestListDialog { Parent = this, Visible = false };
-            QuestDetailDialog = new QuestDetailDialog { Parent = this, Visible = false };
+            QuestDetailDialog = new QuestDetailDialog {Parent = this, Visible = false};
             QuestTrackingDialog = new QuestTrackingDialog { Parent = this, Visible = false };
-            QuestLogDialog = new QuestDiaryDialog { Parent = this, Visible = false };
+            QuestLogDialog = new QuestDiaryDialog {Parent = this, Visible = false};
 
             RankingDialog = new RankingDialog { Parent = this, Visible = false };
 
@@ -252,7 +254,7 @@ namespace Client.MirScenes
             GuestItemRentDialog = new GuestItemRentDialog { Parent = this, Visible = false };
             ItemRentalDialog = new ItemRentalDialog { Parent = this, Visible = false };
 
-            BuffsDialog = new BuffDialog { Parent = this, Visible = true };
+            BuffsDialog = new BuffDialog {Parent = this, Visible = true};
 
             //not added yet
             KeyboardLayoutDialog = new KeyboardLayoutDialog { Parent = this, Visible = false };
@@ -359,15 +361,15 @@ namespace Client.MirScenes
                         if (!InventoryDialog.Visible) InventoryDialog.Show();
                         else InventoryDialog.Hide();
                         break;
-                    case KeybindOptions.Equipment:
-                    case KeybindOptions.Equipment2:
-                        if (!CharacterDialog.Visible || !CharacterDialog.CharacterPage.Visible)
-                        {
-                            CharacterDialog.Show();
-                            CharacterDialog.ShowCharacterPage();
-                        }
-                        else CharacterDialog.Hide();
-                        break;
+                    //case KeybindOptions.Equipment:
+                    //case KeybindOptions.Equipment2:
+                    //    if (!CharacterDialog.Visible || !CharacterDialog.CharacterPage.Visible)
+                    //    {
+                    //        CharacterDialog.Show();
+                    //        CharacterDialog.ShowCharacterPage();
+                    //    }
+                    //    else CharacterDialog.Hide();
+                    //    break;
                     case KeybindOptions.Skills:
                     case KeybindOptions.Skills2:
                         if (!CharacterDialog.Visible || !CharacterDialog.SkillPage.Visible)
@@ -671,6 +673,16 @@ namespace Client.MirScenes
             }
         }
 
+        public void F10()
+        {
+            if (!CharacterDialog.Visible || !CharacterDialog.CharacterPage.Visible)
+            {
+                CharacterDialog.Show();
+                CharacterDialog.ShowCharacterPage();
+            }
+            else CharacterDialog.Hide();
+        }
+
         public void ChangeSkillMode(bool? ctrl)
         {
             if (Settings.SkillMode || ctrl == true)
@@ -735,7 +747,7 @@ namespace Client.MirScenes
         {
             if (User.RidingMount || User.Fishing) return;
 
-            if (!User.HasClassWeapon && User.Weapon >= 0)
+            if(!User.HasClassWeapon && User.Weapon >= 0)
             {
                 ChatDialog.ReceiveChat("You must be wearing a suitable weapon to perform this skill", ChatType.System);
                 return;
@@ -922,6 +934,7 @@ namespace Client.MirScenes
             for (int i = 0; i < OutputLines.Length; i++)
                 OutputLines[i].Draw();
         }
+
         public override void Process()
         {
             if (MapControl == null || User == null)
@@ -938,9 +951,9 @@ namespace Client.MirScenes
                 CanMove = false;
 
 
-            if (CMain.Time >= CMain.NextPing)
+            if (CMain.Time >= NextPing)
             {
-                CMain.NextPing = CMain.Time + 60000;
+                NextPing = CMain.Time + 60000;
                 Network.Enqueue(new C.KeepAlive() { Time = CMain.Time });
             }
 
@@ -1731,9 +1744,6 @@ namespace Client.MirScenes
                 case (short)ServerPacketIds.OpenBrowser:                  
                     OpenBrowser((S.OpenBrowser)p);
                     break;
-                case (short)ServerPacketIds.PlaySound:
-                    PlaySound((S.PlaySound)p);
-                    break;
                 default:
                     base.ProcessPacket(p);
                     break;
@@ -1743,7 +1753,7 @@ namespace Client.MirScenes
         private void KeepAlive(S.KeepAlive p)
         {
             if (p.Time == 0) return;
-            CMain.PingTime = (CMain.Time - p.Time);
+            PingTime = (CMain.Time - p.Time);
         }
         private void MapInformation(S.MapInformation p)
         {
@@ -2575,11 +2585,8 @@ namespace Client.MirScenes
                 SoundManager.StopSound(20000 + 126 * 10 + 5 + i);
 
             User = null;
-            if (Settings.Resolution != 1024)
-            {
-                CMain.SetResolution(1024, 768);
-            }
-
+            if (Settings.Resolution != 800)
+                CMain.SetResolution(800, 600);
             ActiveScene = new SelectScene(p.Characters);
 
             Dispose();
@@ -5791,9 +5798,6 @@ namespace Client.MirScenes
                     case ItemType.Transform:
                         InfoLanguageString = GameLanguage.ItemTypeTransform;
                         break;
-                    case ItemType.Deco:
-                        InfoLanguageString = GameLanguage.ItemTypeDeco;
-                        break;
                 }
                 WedRingName = string.Format(GameLanguage.WedRingName, InfoLanguageString, "\n" , GameLanguage.Weight, HoverItem.Weight + text);
             }
@@ -7267,7 +7271,7 @@ namespace Client.MirScenes
 
             #region DONT_DEATH_DROP
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontDeathdrop))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontDeathdrop))
             {
                 count++;
                 MirLabel DONT_DEATH_DROPLabel = new MirLabel
@@ -7288,7 +7292,7 @@ namespace Client.MirScenes
 
             #region DONT_DROP
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontDrop))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontDrop))
             {
                 count++;
                 MirLabel DONT_DROPLabel = new MirLabel
@@ -7309,7 +7313,7 @@ namespace Client.MirScenes
 
             #region DONT_UPGRADE
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontUpgrade))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontUpgrade))
             {
                 count++;
                 MirLabel DONT_UPGRADELabel = new MirLabel
@@ -7330,7 +7334,7 @@ namespace Client.MirScenes
 
             #region DONT_SELL
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontSell))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontSell))
             {
                 count++;
                 MirLabel DONT_SELLLabel = new MirLabel
@@ -7351,7 +7355,7 @@ namespace Client.MirScenes
 
             #region DONT_TRADE
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontTrade))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontTrade))
             {
                 count++;
                 MirLabel DONT_TRADELabel = new MirLabel
@@ -7372,7 +7376,7 @@ namespace Client.MirScenes
 
             #region DONT_STORE
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontStore))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontStore))
             {
                 count++;
                 MirLabel DONT_STORELabel = new MirLabel
@@ -7393,7 +7397,7 @@ namespace Client.MirScenes
 
             #region DONT_REPAIR
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DontRepair))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DontRepair))
             {
                 count++;
                 MirLabel DONT_REPAIRLabel = new MirLabel
@@ -7414,7 +7418,7 @@ namespace Client.MirScenes
 
             #region DONT_SPECIALREPAIR
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.NoSRepair))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.NoSRepair))
             {
                 count++;
                 MirLabel DONT_REPAIRLabel = new MirLabel
@@ -7435,7 +7439,7 @@ namespace Client.MirScenes
 
             #region BREAK_ON_DEATH
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.BreakOnDeath))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.BreakOnDeath))
             {
                 count++;
                 MirLabel DONT_REPAIRLabel = new MirLabel
@@ -7456,7 +7460,7 @@ namespace Client.MirScenes
 
             #region DONT_DESTROY_ON_DROP
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.DestroyOnDrop))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.DestroyOnDrop))
             {
                 count++;
                 MirLabel DONT_DODLabel = new MirLabel
@@ -7477,7 +7481,7 @@ namespace Client.MirScenes
 
             #region NoWeddingRing
 
-            if (HoverItem.Info.Bind != BindMode.None && HoverItem.Info.Bind.HasFlag(BindMode.NoWeddingRing))
+            if (HoverItem.Info.Bind != BindMode.none && HoverItem.Info.Bind.HasFlag(BindMode.NoWeddingRing))
             {
                 count++;
                 MirLabel No_WedLabel = new MirLabel
@@ -8034,7 +8038,7 @@ namespace Client.MirScenes
                         HoverItem.Info.ToolTip = string.Format("Increase AC {0}-{0} for {1}.", HoverItem.AC + realItem.MaxAC, strTime);
                         break;
                     case 5://amc low/med/high
-                        HoverItem.Info.ToolTip = string.Format("Increase MAC {0}-{0} for {1}.", HoverItem.MAC + realItem.MaxMAC, strTime);
+                        HoverItem.Info.ToolTip = string.Format("Increase AMC {0}-{0} for {1}.", HoverItem.MAC + realItem.MaxAC, strTime);
                         break;
                     case 6://speed low/med/high
                         HoverItem.Info.ToolTip = string.Format("Increase AttackSpeed by {0} for {1}.", HoverItem.AttackSpeed + realItem.AttackSpeed, strTime);
@@ -8300,12 +8304,6 @@ namespace Client.MirScenes
             return "";
         }
 
-        public class UserId
-        {
-            public long Id = 0;
-            public string UserName = "";
-        }
-
         public class OutPutMessage
         {
             public string Message;
@@ -8455,10 +8453,7 @@ namespace Client.MirScenes
         private void OpenBrowser(S.OpenBrowser p) {
             BrowserHelper.OpenDefaultBrowser(p.Url);
         }
-        public void PlaySound(S.PlaySound p)
-        {
-            SoundManager.PlaySound(p.Sound, false);
-        }
+
 
         #region Disposable
 
@@ -8577,6 +8572,9 @@ namespace Client.MirScenes
         public long LightningTime, FireTime;
 
         public bool FloorValid, LightsValid;
+
+        private Texture _floorTexture, _lightTexture;
+        private Surface _floorSurface, _lightSurface;
 
         public long OutputDelay;
 
@@ -8769,6 +8767,7 @@ namespace Client.MirScenes
             {
                 DXManager.ControlList.Add(this);
                 ControlTexture = new Texture(DXManager.Device, Size.Width, Size.Height, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
+                ControlTexture.Disposing += ControlTexture_Disposing;
                 TextureSize = Size;
             }
 
@@ -8780,7 +8779,7 @@ namespace Client.MirScenes
             DrawBackground();
 
             if (FloorValid)
-                DXManager.Sprite.Draw(DXManager.FloorTexture, new Rectangle(0, 0, Settings.ScreenWidth, Settings.ScreenHeight), Vector3.Zero, Vector3.Zero, Color.White);
+                DXManager.Sprite.Draw2D(_floorTexture, Point.Empty, 0F, Point.Empty, Color.White);
 
             DrawObjects();
 
@@ -8840,7 +8839,7 @@ namespace Client.MirScenes
             float oldOpacity = DXManager.Opacity;
 
             DXManager.SetOpacity(Opacity);
-            DXManager.Sprite.Draw(ControlTexture, new Rectangle(0, 0, Settings.ScreenWidth, Settings.ScreenHeight), Vector3.Zero, Vector3.Zero, Color.White);
+            DXManager.Sprite.Draw2D(ControlTexture, Point.Empty, 0F, Point.Empty, Color.White);
             DXManager.SetOpacity(oldOpacity);
 
             CleanTime = CMain.Time + Settings.CleanDelay;
@@ -8848,16 +8847,17 @@ namespace Client.MirScenes
 
         private void DrawFloor()
         {
-            if (DXManager.FloorTexture == null || DXManager.FloorTexture.Disposed)
+            if (_floorTexture == null || _floorTexture.Disposed)
             {
-                DXManager.FloorTexture = new Texture(DXManager.Device, Settings.ScreenWidth, Settings.ScreenHeight, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
-                DXManager.FloorSurface = DXManager.FloorTexture.GetSurfaceLevel(0);
+                _floorTexture = new Texture(DXManager.Device, Settings.ScreenWidth, Settings.ScreenHeight, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
+                _floorTexture.Disposing += FloorTexture_Disposing;
+                _floorSurface = _floorTexture.GetSurfaceLevel(0);
             }
 
 
             Surface oldSurface = DXManager.CurrentSurface;
 
-            DXManager.SetSurface(DXManager.FloorSurface);
+            DXManager.SetSurface(_floorSurface);
             DXManager.Device.Clear(ClearFlags.Target, Color.Empty, 0, 0); //Color.Black
 
             int index;
@@ -8875,7 +8875,7 @@ namespace Client.MirScenes
                     if (x >= Width) break;
                     drawX = (x - User.Movement.X + OffSetX) * CellWidth - OffSetX + User.OffSetMove.X; //Moving OffSet
                     if ((M2CellInfo[x, y].BackImage == 0) || (M2CellInfo[x, y].BackIndex == -1)) continue;
-                    index = (M2CellInfo[x, y].BackImage & 0x1FFFFFFF) - 1;
+                    index = (M2CellInfo[x, y].BackImage & 0x1FFFF) - 1;
                     Libraries.MapLibs[M2CellInfo[x, y].BackIndex].Draw(index, drawX, drawY);
                 }
             }
@@ -9174,14 +9174,15 @@ namespace Client.MirScenes
         {
             if (DXManager.Lights == null || DXManager.Lights.Count == 0) return;
 
-            if (DXManager.LightTexture == null || DXManager.LightTexture.Disposed)
+            if (_lightTexture == null || _lightTexture.Disposed)
             {
-                DXManager.LightTexture = new Texture(DXManager.Device, Settings.ScreenWidth, Settings.ScreenHeight, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
-                DXManager.LightSurface = DXManager.LightTexture.GetSurfaceLevel(0);
+                _lightTexture = new Texture(DXManager.Device, Settings.ScreenWidth, Settings.ScreenHeight, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
+                _lightTexture.Disposing += FloorTexture_Disposing;
+                _lightSurface = _lightTexture.GetSurfaceLevel(0);
             }
 
             Surface oldSurface = DXManager.CurrentSurface;
-            DXManager.SetSurface(DXManager.LightSurface);
+            DXManager.SetSurface(_lightSurface);
 
             #region Night Lights
             Color Darkness = Color.Black;
@@ -9211,7 +9212,7 @@ namespace Client.MirScenes
             int light;
             Point p;
             DXManager.SetBlend(true);
-            DXManager.Device.SetRenderState(SlimDX.Direct3D9.RenderState.SourceBlend, Blend.SourceAlpha);
+            DXManager.Device.RenderState.SourceBlend = Blend.SourceAlpha;
 
             #region Object Lights (Player/Mob/NPC)
             for (int i = 0; i < Objects.Count; i++)
@@ -9258,7 +9259,7 @@ namespace Client.MirScenes
                     if (DXManager.Lights[LightRange] != null && !DXManager.Lights[LightRange].Disposed)
                     {
                         p.Offset(-(DXManager.LightSizes[LightRange].X / 2) - (CellWidth / 2), -(DXManager.LightSizes[LightRange].Y / 2) - (CellHeight / 2) -5);
-                        DXManager.Sprite.Draw(DXManager.Lights[LightRange], new Rectangle(0, 0, Settings.ScreenWidth, Settings.ScreenHeight), Vector3.Zero, new Vector3((float)p.X, (float)p.Y, 0.0F), lightColour);
+                        DXManager.Sprite.Draw2D(DXManager.Lights[LightRange], PointF.Empty, 0, p, lightColour);
                     }
 
                 }
@@ -9276,7 +9277,7 @@ namespace Client.MirScenes
                     if (DXManager.Lights[light] != null && !DXManager.Lights[light].Disposed)
                     {
                         p.Offset(-(DXManager.LightSizes[light].X / 2) - (CellWidth / 2), -(DXManager.LightSizes[light].Y / 2) - (CellHeight / 2) - 5);
-                        DXManager.Sprite.Draw(DXManager.Lights[light], new Rectangle(0, 0, DXManager.LightSizes[light].X, DXManager.LightSizes[light].Y), Vector3.Zero, new Vector3((float)p.X, (float)p.Y, 0.0F), effect.LightColour);
+                        DXManager.Sprite.Draw2D(DXManager.Lights[light], PointF.Empty, 0, p, effect.LightColour);
                     }
 
                 }
@@ -9300,7 +9301,7 @@ namespace Client.MirScenes
                     if (DXManager.Lights[light] != null && !DXManager.Lights[light].Disposed)
                     {
                         p.Offset(-(DXManager.LightSizes[light].X / 2) - (CellWidth / 2), -(DXManager.LightSizes[light].Y / 2) - (CellHeight / 2) - 5);
-                        DXManager.Sprite.Draw(DXManager.Lights[light], new Rectangle(0, 0, DXManager.LightSizes[light].X, DXManager.LightSizes[light].Y), Vector3.Zero, new Vector3((float)p.X, (float)p.Y, 0.0F), Color.White);
+                        DXManager.Sprite.Draw2D(DXManager.Lights[light], PointF.Empty, 0, p, Color.White);
                     }
                 }
             }
@@ -9358,7 +9359,7 @@ namespace Client.MirScenes
                     if (DXManager.Lights[light] != null && !DXManager.Lights[light].Disposed)
                     {
                         p.Offset(-(DXManager.LightSizes[light].X / 2) - (CellWidth / 2) + 10, -(DXManager.LightSizes[light].Y / 2) - (CellHeight / 2) - 5);
-                        DXManager.Sprite.Draw(DXManager.Lights[light], new Rectangle(0, 0, DXManager.LightSizes[light].X, DXManager.LightSizes[light].Y), Vector3.Zero, new Vector3((float)p.X, (float)p.Y, 0.0F), lightIntensity);
+                        DXManager.Sprite.Draw2D(DXManager.Lights[light], PointF.Empty, 0, p, lightIntensity);
                     }
                 }
             }
@@ -9367,17 +9368,18 @@ namespace Client.MirScenes
             DXManager.SetBlend(false);
             DXManager.SetSurface(oldSurface);
 
-            DXManager.Device.SetRenderState(SlimDX.Direct3D9.RenderState.SourceBlend, Blend.DestinationColor);
-            DXManager.Device.SetRenderState(SlimDX.Direct3D9.RenderState.DestinationBlend, Blend.BothInverseSourceAlpha);
+            DXManager.Device.RenderState.SourceBlend = Blend.DestinationColor;
+            DXManager.Device.RenderState.DestinationBlend = Blend.BothInvSourceAlpha;
 
-            DXManager.Sprite.Draw(DXManager.LightTexture, new Rectangle(0, 0, Settings.ScreenWidth, Settings.ScreenHeight), Vector3.Zero, Vector3.Zero, Color.White);
+            DXManager.Sprite.Draw2D(_lightTexture, PointF.Empty, 0, PointF.Empty, Color.White);
             DXManager.Sprite.End();
             DXManager.Sprite.Begin(SpriteFlags.AlphaBlend);
         }
 
         private static void OnMouseClick(object sender, EventArgs e)
         {
-            if (!(e is MouseEventArgs me)) return;
+            MouseEventArgs me = e as MouseEventArgs;
+            if (me == null) return;
 
             if (AwakeningAction == true) return;
             switch (me.Button)
@@ -9396,6 +9398,18 @@ namespace Client.MirScenes
                             GameScene.NPCTime = CMain.Time + 5000;
                             GameScene.NPCID = npc.ObjectID;
                             Network.Enqueue(new C.CallNPC { ObjectID = npc.ObjectID, Key = "[@Main]" });
+                        }
+
+                        MonsterObject mon = MapObject.MouseObject as MonsterObject;
+                        if (mon != null && mon.AI == 201)
+                        {
+                            GameScene.Scene.NPCDialog.Hide();
+
+                            if (CMain.Time <= GameScene.NPCTime) return;
+
+                            GameScene.NPCTime = CMain.Time + 5000;
+
+                            Network.Enqueue(new C.TalkMonsterNPC { ObjectID = mon.ObjectID });
                         }
                     }
                     break;
@@ -9477,7 +9491,6 @@ namespace Client.MirScenes
 
                 return;
             }
-
             if (GameScene.PickedUpGold)
             {
                 MirAmountBox amountBox = new MirAmountBox(GameLanguage.DropAmount, 116, GameScene.Gold);
@@ -9493,6 +9506,8 @@ namespace Client.MirScenes
                 amountBox.Show();
                 GameScene.PickedUpGold = false;
             }
+
+
 
             if (MapObject.MouseObject != null && !MapObject.MouseObject.Dead && !(MapObject.MouseObject is ItemObject) &&
                 !(MapObject.MouseObject is NPCObject) && !(MapObject.MouseObject is MonsterObject && MapObject.MouseObject.AI == 64)
@@ -10068,12 +10083,12 @@ namespace Client.MirScenes
             if (M2CellInfo[p.X, p.Y].DoorIndex == 0) return true;
             Door DoorInfo = GetDoor(M2CellInfo[p.X, p.Y].DoorIndex);
             if (DoorInfo == null) return false;//if the door doesnt exist then it isnt even being shown on screen (and cant be open lol)
-            if ((DoorInfo.DoorState == 0) || (DoorInfo.DoorState == DoorState.Closing))
+            if ((DoorInfo.DoorState == 0) || (DoorInfo.DoorState == 3))
             {
                 Network.Enqueue(new C.Opendoor() { DoorIndex = DoorInfo.index });
                 return false;
             }
-            if ((DoorInfo.DoorState == DoorState.Open) && (DoorInfo.LastTick + 4000 > CMain.Time))
+            if ((DoorInfo.DoorState == 2) && (DoorInfo.LastTick + 4000 > CMain.Time))
             {
                 Network.Enqueue(new C.Opendoor() { DoorIndex = DoorInfo.index });
             }
@@ -10179,6 +10194,15 @@ namespace Client.MirScenes
             return false;
         }
 
+        private void FloorTexture_Disposing(object sender, EventArgs e)
+        {
+            FloorValid = false;
+            _floorTexture = null;
+
+            if (_floorSurface != null && !_floorSurface.Disposed)
+                _floorSurface.Dispose();
+            _floorSurface = null;
+        }
         #region Disposable
 
         protected override void Dispose(bool disposing)
@@ -10205,6 +10229,13 @@ namespace Client.MirScenes
                 LightsValid = false;
                 MapDarkLight = 0;
                 Music = 0;
+
+                if (_floorSurface != null && !_floorSurface.Disposed)
+                    _floorSurface.Dispose();
+
+
+                if (_lightSurface != null && !_lightSurface.Disposed)
+                    _lightSurface.Dispose();
 
                 AnimationCount = 0;
                 Effects.Clear();
@@ -10247,38 +10278,36 @@ namespace Client.MirScenes
         {
             for (int i = 0; i < Doors.Count; i++)
             {
-                if ((Doors[i].DoorState == DoorState.Opening) || (Doors[i].DoorState == DoorState.Closing))
+                if ((Doors[i].DoorState == 1) || (Doors[i].DoorState == 3))
                 {
                     if (Doors[i].LastTick + 50 < CMain.Time)
                     {
                         Doors[i].LastTick = CMain.Time;
                         Doors[i].ImageIndex++;
-
-                        if (Doors[i].ImageIndex == 1)//change the 1 if you want to animate doors opening/closing
+                        if (Doors[i].ImageIndex == 1)//change the 1 if you want to actualy animate doors opening/closing
                         {
                             Doors[i].ImageIndex = 0;
-                            Doors[i].DoorState = (DoorState)Enum.ToObject(typeof(DoorState), ((byte)++Doors[i].DoorState % 4));
+                            Doors[i].DoorState = (byte)(++Doors[i].DoorState % 4);
                         }
-
                         FloorValid = false;
                     }
                 }
-                if (Doors[i].DoorState == DoorState.Open)
+                if (Doors[i].DoorState == 2)
                 {
                     if (Doors[i].LastTick + 5000 < CMain.Time)
                     {
                         Doors[i].LastTick = CMain.Time;
-                        Doors[i].DoorState = DoorState.Closing;
+                        Doors[i].DoorState = 3;
                         FloorValid = false;
                     }
                 }
             }
         }
-        public void OpenDoor(byte Index, bool closed)
+        public void OpenDoor(byte Index, bool Closed)
         {
             Door Info = GetDoor(Index);
             if (Info == null) return;
-            Info.DoorState = (closed ? DoorState.Closing : Info.DoorState == DoorState.Open ? DoorState.Open : DoorState.Opening);
+            Info.DoorState = (byte)(Closed? 3: Info.DoorState == 2? 2: 1);
             Info.ImageIndex = 0;
             Info.LastTick = CMain.Time;
         }

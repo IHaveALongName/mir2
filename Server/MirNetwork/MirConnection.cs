@@ -354,6 +354,9 @@ namespace Server.MirNetwork
                 case (short)ClientPacketIds.CallNPC:
                     CallNPC((C.CallNPC)p);
                     break;
+                case (short)ClientPacketIds.TalkMonsterNPC:
+                    TalkMonsterNPC((C.TalkMonsterNPC)p);
+                    break;
                 case (short)ClientPacketIds.BuyItem:
                     BuyItem((C.BuyItem)p);
                     break;
@@ -704,32 +707,19 @@ namespace Server.MirNetwork
             if (Stage != GameStage.None) return;
 
             if (Settings.CheckVersion)
-            {
-                bool match = false;
-
-                foreach (var hash in Settings.VersionHashes)
-                {
-                    if (Functions.CompareBytes(hash, p.VersionHash))
-                    {
-                        match = true;
-                        break;
-                    }
-                }
-
-                if (!match)
+                if (!Functions.CompareBytes(Settings.VersionHash, p.VersionHash))
                 {
                     Disconnecting = true;
 
                     List<byte> data = new List<byte>();
 
-                    data.AddRange(new S.ClientVersion { Result = 0 }.GetPacketBytes());
+                    data.AddRange(new S.ClientVersion {Result = 0}.GetPacketBytes());
 
                     BeginSend(data);
                     SoftDisconnect(10);
                     MessageQueue.Enqueue(SessionID + ", Disconnnected - Wrong Client Version.");
                     return;
                 }
-            }
 
             MessageQueue.Enqueue(SessionID + ", " + IPAddress + ", Client version matched.");
             Enqueue(new S.ClientVersion { Result = 1 });
@@ -1115,9 +1105,9 @@ namespace Server.MirNetwork
                 return;
             }
 
-            if (p.ObjectID == Player.DefaultNPC.LoadedObjectID && Player.NPCObjectID == Player.DefaultNPC.LoadedObjectID)
+            if (p.ObjectID == Player.DefaultNPC.ObjectID && Player.NPCID == Player.DefaultNPC.ObjectID)
             {
-                Player.CallDefaultNPC(p.Key);
+                Player.CallDefaultNPC(p.ObjectID, p.Key);
                 return;
             }
 
@@ -1128,6 +1118,13 @@ namespace Server.MirNetwork
             }
 
             Player.CallNPC(p.ObjectID, p.Key);
+        }
+
+        private void TalkMonsterNPC(C.TalkMonsterNPC p)
+        {
+            if (Stage != GameStage.Game) return;
+
+            Player.TalkMonster(p.ObjectID);
         }
 
         private void BuyItem(C.BuyItem p)
@@ -1700,7 +1697,7 @@ namespace Server.MirNetwork
 
             Player.NPCInputStr = p.Value;
 
-            Player.CallNPC(Player.NPCObjectID, p.PageName);
+            Player.CallNPC(Player.NPCID, p.PageName);
         }
 
         public List<byte[]> Image = new List<byte[]>();

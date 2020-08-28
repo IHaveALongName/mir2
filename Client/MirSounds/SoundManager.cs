@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using SlimDX.DirectSound;
+using Microsoft.DirectX.DirectSound;
+
 
 namespace Client.MirSounds
 {
     static class SoundManager
     {
-        public static DirectSound Device;
+        public static Device Device;
         private static readonly List<SoundLibrary> Sounds = new List<SoundLibrary>();
         private static readonly Dictionary<int, string> IndexList = new Dictionary<int, string>();
 
@@ -39,10 +40,8 @@ namespace Client.MirSounds
         {
             if (Program.Form == null || Program.Form.IsDisposed) return;
 
-            Device = new DirectSound();
-            Device.SetCooperativeLevel(Program.Form.Handle, CooperativeLevel.Normal);
-            Device.IsDefaultPool = false;
-
+            Device = new Device();
+            Device.SetCooperativeLevel(Program.Form, CooperativeLevel.Normal);
             LoadSoundList();
         }
         public static void LoadSoundList()

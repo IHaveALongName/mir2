@@ -40,7 +40,7 @@ namespace Server
         //General
         public static string VersionPath = Path.Combine(".", "Mir2.Exe");
         public static bool CheckVersion = true;
-        public static List<byte[]> VersionHashes;
+        public static byte[] VersionHash;
         public static string GMPassword = "C#Mir 4.0";
         public static bool Multithreaded = true;
         public static int ThreadLimit = 2;
@@ -48,12 +48,12 @@ namespace Server
         public static bool EnforceDBChecks = true;
 
         public static string DefaultNPCFilename = "00Default";
-        public static string MonsterNPCFilename = "00Monster";
-        public static string RobotNPCFilename = "00Robot";
         public static string FishingDropFilename = "00Fishing";
 	    public static string AwakeningDropFilename = "00Awakening";
         public static string StrongboxDropFilename = "00Strongbox";
         public static string BlackstoneDropFilename = "00Blackstone";
+        public static string MonsterNPCFilename = "00Monster";
+        public static string RobotNPCFilename = "00Robot";
 
         //Network
         public static string IPAddress = "127.0.0.1";
@@ -251,11 +251,9 @@ namespace Server
                     MaxPoisonRecovery = 6,
                     MaxLuck = 10;
 
-        public static bool PvpCanResistMagic = false,
+        public static Boolean PvpCanResistMagic = false,
                               PvpCanResistPoison = false,
                               PvpCanFreeze = false;
-
-        public static byte RangeAccuracyBonus = 0;
 
         //Guild related settings
         public static byte Guild_RequiredLevel = 22, Guild_PointPerLevel = 0;
@@ -263,7 +261,7 @@ namespace Server
         public static uint Guild_WarCost = 3000;
         public static long Guild_WarTime = 180;
 
-        public static List<GuildItemVolume> Guild_CreationCostList = new List<GuildItemVolume>();
+        public static List<ItemVolume> Guild_CreationCostList = new List<ItemVolume>();
         public static List<long> Guild_ExperienceList = new List<long>();
         public static List<int> Guild_MembercapList = new List<int>();
         public static List<GuildBuffInfo> Guild_BuffList = new List<GuildBuffInfo>();
@@ -274,17 +272,10 @@ namespace Server
         {
             try
             {
-                VersionHashes = new List<byte[]>();
-
-                var paths = VersionPath.Split(',');
-
-                foreach (var path in paths)
-                {
-                    if (File.Exists(path))
-                        using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read))
-                        using (MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider())
-                            VersionHashes.Add(md5.ComputeHash(stream));
-                }
+                if (File.Exists(VersionPath))
+                    using (FileStream stream = new FileStream(VersionPath, FileMode.Open, FileAccess.Read))
+                    using (MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider())
+                        VersionHash = md5.ComputeHash(stream);
             }
             catch (Exception ex)
             {
@@ -429,8 +420,6 @@ namespace Server
             PvpCanResistMagic = Reader.ReadBoolean("Items","PvpCanResistMagic",PvpCanResistMagic);
             PvpCanResistPoison = Reader.ReadBoolean("Items", "PvpCanResistPoison", PvpCanResistPoison);
             PvpCanFreeze = Reader.ReadBoolean("Items", "PvpCanFreeze", PvpCanFreeze);
-
-            RangeAccuracyBonus = Reader.ReadByte("Bonus", "RangeAccuracyBonus", RangeAccuracyBonus);
 
             //IntelligentCreature
             for (int i = 0; i < IntelligentCreatureNameList.Length; i++)
@@ -648,8 +637,6 @@ namespace Server
             Reader.Write("Items", "PvpCanResistMagic", PvpCanResistMagic);
             Reader.Write("Items", "PvpCanResistPoison", PvpCanResistPoison);
             Reader.Write("Items", "PvpCanFreeze", PvpCanFreeze);
-
-            Reader.Write("Bonus", "RangeAccuracyBonus", RangeAccuracyBonus);
 
             //IntelligentCreature
             for (int i = 0; i < IntelligentCreatureNameList.Length; i++)
@@ -937,20 +924,20 @@ namespace Server
             }
             InIReader reader = new InIReader(Path.Combine(ConfigPath, "Mines.ini"));
             int i = 0;
-            MineSet mine;
+            MineSet Mine;
             while (reader.ReadByte("Mine" + i.ToString(), "SpotRegenRate", 255) != 255)
             {
-                mine = new MineSet();
-                mine.Name = reader.ReadString("Mine" + i.ToString(), "Name", mine.Name);
-                mine.SpotRegenRate = reader.ReadByte("Mine" + i.ToString(), "SpotRegenRate", mine.SpotRegenRate);
-                mine.MaxStones = reader.ReadByte("Mine" + i.ToString(), "MaxStones", mine.MaxStones);
-                mine.HitRate = reader.ReadByte("Mine" + i.ToString(), "HitRate", mine.HitRate);
-                mine.DropRate = reader.ReadByte("Mine" + i.ToString(), "DropRate", mine.DropRate);
-                mine.TotalSlots = reader.ReadByte("Mine" + i.ToString(), "TotalSlots", mine.TotalSlots);
+                Mine = new MineSet();
+                Mine.Name = reader.ReadString("Mine" + i.ToString(), "Name", Mine.Name);
+                Mine.SpotRegenRate = reader.ReadByte("Mine" + i.ToString(), "SpotRegenRate", Mine.SpotRegenRate);
+                Mine.MaxStones = reader.ReadByte("Mine" + i.ToString(), "MaxStones", Mine.MaxStones);
+                Mine.HitRate = reader.ReadByte("Mine" + i.ToString(), "HitRate", Mine.HitRate);
+                Mine.DropRate = reader.ReadByte("Mine" + i.ToString(), "DropRate", Mine.DropRate);
+                Mine.TotalSlots = reader.ReadByte("Mine" + i.ToString(), "TotalSlots", Mine.TotalSlots);
                 int j = 0;
                 while (reader.ReadByte("Mine" + i.ToString(), "D" + j.ToString() + "-MinSlot", 255) != 255)
                 {
-                    mine.Drops.Add(new MineDrop()
+                    Mine.Drops.Add(new MineDrop()
                         {
                             ItemName = reader.ReadString("Mine" + i.ToString(), "D" + j.ToString() + "-ItemName", ""),
                             MinSlot = reader.ReadByte("Mine" + i.ToString(), "D" + j.ToString() + "-MinSlot", 255),
@@ -962,7 +949,7 @@ namespace Server
                         });
                     j++;
                 }
-                MineSetList.Add(mine);
+                MineSetList.Add(Mine);
                 i++;
             }
 
@@ -971,20 +958,20 @@ namespace Server
         {
             File.Delete(Path.Combine(ConfigPath, "Mines.ini"));
             InIReader reader = new InIReader(Path.Combine(ConfigPath, "Mines.ini"));
-            MineSet mine;
+            MineSet Mine;
             for (int i = 0; i < MineSetList.Count; i++)
             {
-                mine = MineSetList[i];
-                reader.Write("Mine" + i.ToString(), "Name", mine.Name);
-                reader.Write("Mine" + i.ToString(), "SpotRegenRate", mine.SpotRegenRate);
-                reader.Write("Mine" + i.ToString(), "MaxStones", mine.MaxStones);
-                reader.Write("Mine" + i.ToString(), "HitRate", mine.HitRate);
-                reader.Write("Mine" + i.ToString(), "DropRate", mine.DropRate);
-                reader.Write("Mine" + i.ToString(), "TotalSlots", mine.TotalSlots);
+                Mine = MineSetList[i];
+                reader.Write("Mine" + i.ToString(), "Name", Mine.Name);
+                reader.Write("Mine" + i.ToString(), "SpotRegenRate", Mine.SpotRegenRate);
+                reader.Write("Mine" + i.ToString(), "MaxStones", Mine.MaxStones);
+                reader.Write("Mine" + i.ToString(), "HitRate", Mine.HitRate);
+                reader.Write("Mine" + i.ToString(), "DropRate", Mine.DropRate);
+                reader.Write("Mine" + i.ToString(), "TotalSlots", Mine.TotalSlots);
                 
-                for (int j = 0; j < mine.Drops.Count; j++)
+                for (int j = 0; j < Mine.Drops.Count; j++)
                 {
-                    MineDrop Drop = mine.Drops[j];
+                    MineDrop Drop = Mine.Drops[j];
                     reader.Write("Mine" + i.ToString(), "D" + j.ToString() + "-ItemName", Drop.ItemName);
                     reader.Write("Mine" + i.ToString(), "D" + j.ToString() + "-MinSlot", Drop.MinSlot);
                     reader.Write("Mine" + i.ToString(), "D" + j.ToString() + "-MaxSlot", Drop.MaxSlot);
@@ -1000,8 +987,8 @@ namespace Server
         {
             if (!File.Exists(Path.Combine(ConfigPath, "GuildSettings.ini")))
             {
-                Guild_CreationCostList.Add(new GuildItemVolume(){Amount = 1000000});
-                Guild_CreationCostList.Add(new GuildItemVolume(){ItemName = "WoomaHorn",Amount = 1});
+                Guild_CreationCostList.Add(new ItemVolume(){Amount = 1000000});
+                Guild_CreationCostList.Add(new ItemVolume(){ItemName = "WoomaHorn",Amount = 1});
                 return;
             }
             InIReader reader = new InIReader(Path.Combine(ConfigPath, "GuildSettings.ini"));
@@ -1014,7 +1001,7 @@ namespace Server
             int i = 0;
             while (reader.ReadUInt32("Required-" + i.ToString(),"Amount",0) != 0)
             {
-                Guild_CreationCostList.Add(new GuildItemVolume()
+                Guild_CreationCostList.Add(new ItemVolume()
                 {
                     ItemName = reader.ReadString("Required-" + i.ToString(), "ItemName", ""),
                     Amount = reader.ReadUInt32("Required-" + i.ToString(), "Amount", 0)

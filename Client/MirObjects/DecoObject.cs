@@ -21,7 +21,7 @@ namespace Client.MirObjects
             get { return false; }
         }
 
-        public int Image;
+        public ushort Image;
 
         public DecoObject(uint objectID)
             : base(objectID)

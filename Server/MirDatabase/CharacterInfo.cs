@@ -495,10 +495,7 @@ namespace Server.MirDatabase
 
             writer.Write(Friends.Count);
             for (int i = 0; i < Friends.Count; i++)
-            {
-                if (Friends[i].Info == null) continue;
                 Friends[i].Save(writer);
-            }
 
             writer.Write(RentedItems.Count);
             foreach (var rentedItemInformation in RentedItems)

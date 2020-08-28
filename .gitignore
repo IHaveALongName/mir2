@@ -58,7 +58,3 @@ Client/Client.csproj
 
 /Build
 /.vs
-/Systems.txt
-Release
-Debug
-obj

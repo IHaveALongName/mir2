@@ -461,7 +461,6 @@ namespace Client.MirControls
                 case ItemType.Script:
                 case ItemType.Pets:
                 case ItemType.Transform:
-                case ItemType.Deco:
                     if (CanUseItem() && GridType == MirGridType.Inventory)
                     {
                         if (CMain.Time < GameScene.UseItemTime) return;
@@ -860,7 +859,7 @@ namespace Client.MirControls
                                     GameScene.Scene.ChatDialog.ReceiveChat("You cannot swap items.", ChatType.System);
                                     return;
                                 }
-                                if (!GuildDialog.MyOptions.HasFlag(GuildRankOptions.CanRetrieveItem))
+                                if (!GuildDialog.MyOptions.HasFlag(RankOptions.CanRetrieveItem))
                                 {
                                     GameScene.Scene.ChatDialog.ReceiveChat("Insufficient rights to retrieve items.", ChatType.System);
                                     return;
@@ -1189,7 +1188,7 @@ namespace Client.MirControls
                             case MirGridType.GuildStorage: //From Guild Storage
                                 if (GameScene.SelectedCell.GridType == MirGridType.GuildStorage)
                                 {                                    
-                                    if (!GuildDialog.MyOptions.HasFlag(GuildRankOptions.CanStoreItem))
+                                    if (!GuildDialog.MyOptions.HasFlag(RankOptions.CanStoreItem))
                                     {
                                         GameScene.Scene.ChatDialog.ReceiveChat("Insufficient rights to store items.", ChatType.System);
                                         return;
@@ -1215,7 +1214,7 @@ namespace Client.MirControls
                                         GameScene.Scene.ChatDialog.ReceiveChat("You cannot swap items.", ChatType.System);
                                         return;
                                     }
-                                    if (!GuildDialog.MyOptions.HasFlag(GuildRankOptions.CanStoreItem))
+                                    if (!GuildDialog.MyOptions.HasFlag(RankOptions.CanStoreItem))
                                     {
                                         GameScene.Scene.ChatDialog.ReceiveChat("Insufficient rights to store items.", ChatType.System);
                                         return;
@@ -1816,7 +1815,8 @@ namespace Client.MirControls
                 case ItemType.Bait:
                 case ItemType.Finder:
                 case ItemType.Reel:
-                    if (MapObject.User.Equipment[(int)EquipmentSlot.Weapon] == null || !MapObject.User.Equipment[(int)EquipmentSlot.Weapon].Info.IsFishingRod)
+                    if (MapObject.User.Equipment[(int)EquipmentSlot.Weapon] == null || 
+                        (MapObject.User.Equipment[(int)EquipmentSlot.Weapon].Info.Shape != 49 && MapObject.User.Equipment[(int)EquipmentSlot.Weapon].Info.Shape != 50))
                     {
                         GameScene.Scene.ChatDialog.ReceiveChat("You do not have a fishing rod equipped.", ChatType.System);
                         return false;

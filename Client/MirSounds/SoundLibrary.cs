@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using SlimDX.DirectSound;
-using SlimDX.Multimedia;
+using Microsoft.DirectX.DirectSound;
 
 namespace Client.MirSounds
 {
-    public class SoundLibrary : IDisposable
+
+    class SoundLibrary : IDisposable
     {
         public int Index;
 
-        private List<SecondarySoundBuffer> _bufferList;
-        private WaveStream _stream;
+        private List<SecondaryBuffer> _bufferList;
 
+        private MemoryStream _mStream;
         private bool _loop;
-
-        private SoundBufferDescription _desc;
-        private readonly byte[] _data;
 
         public SoundLibrary(int index, string fileName, bool loop)
         {
@@ -25,46 +22,30 @@ namespace Client.MirSounds
             fileName = Path.Combine(Settings.SoundPath, fileName);
             if (!File.Exists(fileName)) return;
 
-            _stream = new WaveStream(fileName);
-
-            _desc = new SoundBufferDescription
-            {
-                SizeInBytes = (int)_stream.Length,
-                Flags = BufferFlags.ControlVolume | BufferFlags.ControlPan | BufferFlags.GlobalFocus,
-                Format = _stream.Format
-            };
-
-            _data = new byte[_desc.SizeInBytes];
-            _stream.Read(_data, 0, (int)_stream.Length);
+            _mStream = new MemoryStream(File.ReadAllBytes(fileName));
 
             _loop = loop;
 
-            _bufferList = new List<SecondarySoundBuffer>();
+            _bufferList = new List<SecondaryBuffer>();
 
             Play();
         }
 
         public void Play()
         {
-            if (_stream == null) return;
+            if (_mStream == null) return;
+
+            _mStream.Seek(0, SeekOrigin.Begin);
 
             if (_loop)
             {
                 if (_bufferList.Count == 0)
-                {
-                    SecondarySoundBuffer buffer = new SecondarySoundBuffer(SoundManager.Device, _desc) { Volume = SoundManager.Vol };
-                    buffer.Write(_data, 0, LockFlags.None);
-                    _bufferList.Add(buffer);
-                }
+                    _bufferList.Add(new SecondaryBuffer(_mStream, new BufferDescription { BufferBytes = (int)_mStream.Length, ControlVolume = true }, SoundManager.Device) { Volume = SoundManager.Vol });
                 else if (_bufferList[0] == null || _bufferList[0].Disposed)
-                {
-                    SecondarySoundBuffer buffer = new SecondarySoundBuffer(SoundManager.Device, _desc) { Volume = SoundManager.Vol };
-                    buffer.Write(_data, 0, LockFlags.None);
-                    _bufferList[0] = buffer;
-                }
+                    _bufferList[0] = new SecondaryBuffer(_mStream, new BufferDescription { BufferBytes = (int)_mStream.Length, ControlVolume = true }, SoundManager.Device) { Volume = SoundManager.Vol };
 
-                if (_bufferList[0].Status != BufferStatus.Playing)
-                    _bufferList[0].Play(0, PlayFlags.Looping);
+                if (!_bufferList[0].Status.Playing)
+                    _bufferList[0].Play(0, BufferPlayFlags.Looping);
             }
             else
             {
@@ -76,19 +57,17 @@ namespace Client.MirSounds
                         continue;
                     }
 
-                    if (_bufferList[i].Status != BufferStatus.Playing)
+                    if (!_bufferList[i].Status.Playing)
                     {
-                        _bufferList[i].Volume = SoundManager.Vol;
-                        _bufferList[i].Play(0, 0);
+                        _bufferList[i].Play(0, BufferPlayFlags.Default);
                         return;
                     }
                 }
 
                 if (_bufferList.Count >= Settings.SoundOverLap) return;
 
-                SecondarySoundBuffer buffer = new SecondarySoundBuffer(SoundManager.Device, _desc) { Volume = SoundManager.Vol, Pan = 0 };
-                buffer.Write(_data, 0, LockFlags.None);
-                buffer.Play(0, 0);
+                SecondaryBuffer buffer = new SecondaryBuffer(_mStream, new BufferDescription { BufferBytes = (int)_mStream.Length, ControlVolume = true }, SoundManager.Device) { Volume = SoundManager.Vol };
+                buffer.Play(0, BufferPlayFlags.Default);
                 _bufferList.Add(buffer);
             }
 
@@ -109,9 +88,9 @@ namespace Client.MirSounds
 
         public void Dispose()
         {
-            if (_stream != null)
-                _stream.Dispose();
-            _stream = null;
+            if (_mStream != null)
+                _mStream.Dispose();
+            _mStream = null;
 
             if (_bufferList != null)
             for (int i = 0; i < _bufferList.Count; i++)

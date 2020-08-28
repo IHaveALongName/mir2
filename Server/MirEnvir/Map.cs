@@ -64,7 +64,7 @@ namespace Server.MirEnvir
             for (int i = 0; i < Doors.Count; i++)
                 if (Doors[i].index == DoorIndex)
                 {
-                    Doors[i].DoorState = DoorState.Open;
+                    Doors[i].DoorState = 2;
                     Doors[i].LastTick = Envir.Time;
                     return true;
                 }
@@ -480,19 +480,18 @@ namespace Server.MirEnvir
                             Envir.SavedSpawns.Add(info);
                     }
 
+
                     for (int i = 0; i < Info.NPCs.Count; i++)
                     {
                         NPCInfo info = Info.NPCs[i];
                         if (!ValidPoint(info.Location)) continue;
 
-                        AddObject(new NPCObject(info) { CurrentMap = this });
+                        AddObject(new NPCObject(info) {CurrentMap = this});
                     }
 
                     for (int i = 0; i < Info.SafeZones.Count; i++)
                         CreateSafeZone(Info.SafeZones[i]);
-
                     CreateMine();
-
                     return true;
                 }
             }
@@ -625,7 +624,7 @@ namespace Server.MirEnvir
         public bool CheckDoorOpen(Point location)
         {
             if (DoorIndex[location.X, location.Y] == null) return true;
-            if (DoorIndex[location.X, location.Y].DoorState != DoorState.Open) return false;
+            if (DoorIndex[location.X, location.Y].DoorState != 2) return false;
             return true;
         }
 
@@ -635,7 +634,7 @@ namespace Server.MirEnvir
             //process doors
             for (int i = 0; i < Doors.Count; i++)
             {
-                if ((Doors[i].DoorState == DoorState.Open) && (Doors[i].LastTick + 5000 < Envir.Time))
+                if ((Doors[i].DoorState == 2) && (Doors[i].LastTick + 5000 < Envir.Time))
                 {
                     Doors[i].DoorState = 0;
                     //broadcast that door is closed
@@ -650,29 +649,30 @@ namespace Server.MirEnvir
                 for (int i = Players.Count - 1; i >= 0; i--)
                 {
                     PlayerObject player = Players[i];
-                    Point location;
+                    Point Location;
                     if (Envir.Random.Next(4) == 0)
                     {
-                        location = player.CurrentLocation;          
+                        Location = player.CurrentLocation;          
                     }
                     else
-                        location = new Point(player.CurrentLocation.X - 10 + Envir.Random.Next(20), player.CurrentLocation.Y - 10 + Envir.Random.Next(20));
+                        Location = new Point(player.CurrentLocation.X - 10 + Envir.Random.Next(20), player.CurrentLocation.Y - 10 + Envir.Random.Next(20));
 
-                    if (!ValidPoint(location)) continue;
+                    if (!ValidPoint(Location)) continue;
 
-                    SpellObject lightning = new SpellObject
+                    SpellObject Lightning = null;
+                    Lightning = new SpellObject
                     {
                         Spell = Spell.MapLightning,
                         Value = Envir.Random.Next(Info.LightningDamage),
                         ExpireTime = Envir.Time + (1000),
                         TickSpeed = 500,
                         Caster = null,
-                        CurrentLocation = location,
+                        CurrentLocation = Location,
                         CurrentMap = this,
                         Direction = MirDirection.Up
                     };
-                    AddObject(lightning);
-                    lightning.Spawned();
+                    AddObject(Lightning);
+                    Lightning.Spawned();
                 }
             }
             if ((Info.Fire) && Envir.Time > FireTime)
@@ -681,30 +681,31 @@ namespace Server.MirEnvir
                 for (int i = Players.Count - 1; i >= 0; i--)
                 {
                     PlayerObject player = Players[i];
-                    Point location;
+                    Point Location;
                     if (Envir.Random.Next(4) == 0)
                     {
-                        location = player.CurrentLocation;
+                        Location = player.CurrentLocation;
 
                     }
                     else
-                        location = new Point(player.CurrentLocation.X - 10 + Envir.Random.Next(20), player.CurrentLocation.Y - 10 + Envir.Random.Next(20));
+                        Location = new Point(player.CurrentLocation.X - 10 + Envir.Random.Next(20), player.CurrentLocation.Y - 10 + Envir.Random.Next(20));
 
-                    if (!ValidPoint(location)) continue;
+                    if (!ValidPoint(Location)) continue;
 
-                    SpellObject lightning = new SpellObject
+                    SpellObject Lightning = null;
+                    Lightning = new SpellObject
                     {
                         Spell = Spell.MapLava,
                         Value = Envir.Random.Next(Info.FireDamage),
                         ExpireTime = Envir.Time + (1000),
                         TickSpeed = 500,
                         Caster = null,
-                        CurrentLocation = location,
+                        CurrentLocation = Location,
                         CurrentMap = this,
                         Direction = MirDirection.Up
                     };
-                    AddObject(lightning);
-                    lightning.Spawned();
+                    AddObject(Lightning);
+                    Lightning.Spawned();
                 }
             }
 
@@ -739,9 +740,9 @@ namespace Server.MirEnvir
                 if ((respawn.Info.RespawnTicks != 0) && (Envir.RespawnTick.CurrentTickcounter < respawn.NextSpawnTick)) continue;
                 if ((respawn.Info.RespawnTicks == 0) && (Envir.Time < respawn.RespawnTime)) continue;
 
-                if (respawn.Count < (respawn.Info.Count * Envir.SpawnMultiplier))
+                if (respawn.Count < (respawn.Info.Count * Envir.spawnmultiplyer))
                 {
-                    int count = (respawn.Info.Count * Envir.SpawnMultiplier) - respawn.Count;
+                    int count = (respawn.Info.Count * Envir.spawnmultiplyer) - respawn.Count;
 
                     for (int c = 0; c < count; c++)
                         Success = respawn.Spawn();
@@ -810,7 +811,6 @@ namespace Server.MirEnvir
                     break;
             }
         }
-
         private void CompleteMagic(IList<object> data)
         {
             bool train = false;

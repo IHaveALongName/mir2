@@ -5,6 +5,7 @@ using Server.MirNetwork;
 using Server.MirEnvir;
 using C = ClientPackets;
 
+
 namespace Server.MirDatabase
 {
     public class AccountInfo
@@ -53,7 +54,6 @@ namespace Server.MirDatabase
         {
 
         }
-
         public AccountInfo(C.NewAccount p)
         {
             AccountID = p.AccountID;

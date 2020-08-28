@@ -11,8 +11,7 @@ using Client.MirGraphics;
 using Client.MirNetwork;
 using Client.MirObjects;
 using Client.MirSounds;
-using SlimDX;
-using SlimDX.Direct3D9;
+using Microsoft.DirectX.Direct3D;
 using Font = System.Drawing.Font;
 using S = ServerPackets;
 using C = ClientPackets;
@@ -437,9 +436,9 @@ namespace Client.MirScenes.Dialogs
                     break;
             }
 
-            if ((CMain.PingTime) > 100)
+            if ((GameScene.Scene.PingTime) > 100)
             {
-                PingLabel.Text = string.Format("Ping: {0}", CMain.PingTime);
+                PingLabel.Text = string.Format("Ping: {0}", GameScene.Scene.PingTime);
                 PingLabel.Visible = true;
             }
             else
@@ -988,30 +987,17 @@ namespace Client.MirScenes.Dialogs
 
                 int oldLength = currentLine.Length;
 
-                Capture capture = null;
-
                 foreach (Match match in RegexFunctions.ChatItemLinks.Matches(currentLine).Cast<Match>().OrderBy(o => o.Index).ToList())
                 {
-                    try
-                    {
-                        int offSet = oldLength - currentLine.Length;
+                    int offSet = oldLength - currentLine.Length;
 
-                        capture = match.Groups[1].Captures[0];
-                        string[] values = capture.Value.Split('/');
-                        currentLine = currentLine.Remove(capture.Index - 1 - offSet, capture.Length + 2).Insert(capture.Index - 1 - offSet, values[0]);
-                        string text = currentLine.Substring(0, capture.Index - 1 - offSet) + " ";
-                        Size size = TextRenderer.MeasureText(CMain.Graphics, text, temp.Font, temp.Size, TextFormatFlags.TextBoxControl);
+                    Capture capture = match.Groups[1].Captures[0];
+                    string[] values = capture.Value.Split('/');
+                    currentLine = currentLine.Remove(capture.Index - 1 - offSet, capture.Length + 2).Insert(capture.Index - 1 - offSet, values[0]);
+                    string text = currentLine.Substring(0, capture.Index - 1 - offSet) + " ";
+                    Size size = TextRenderer.MeasureText(CMain.Graphics, text, temp.Font, temp.Size, TextFormatFlags.TextBoxControl);
 
-                        ChatLink(values[0], ulong.Parse(values[1]), temp.Location.Add(new Point(size.Width - 10, 0)));
-                    }
-                    catch(Exception ex)
-                    {
-						//Temporary debug to catch unknown error
-                        CMain.SaveError(ex.ToString());
-                        CMain.SaveError(currentLine);
-                        CMain.SaveError(capture.Value);
-                        throw;
-                    }
+                    ChatLink(values[0], ulong.Parse(values[1]), temp.Location.Add(new Point(size.Width - 10, 0)));
                 }
 
                 temp.Text = currentLine;
@@ -3169,7 +3155,7 @@ namespace Client.MirScenes.Dialogs
                 else
                     colour = Color.FromArgb(255, 0, 0);
 
-                DXManager.Sprite.Draw(DXManager.RadarTexture, new Rectangle(0, 0, 2, 2), Vector3.Zero, new Vector3((float)(x - 0.5), (float)(y - 0.5), 0.0F), colour);
+                DXManager.Sprite.Draw2D(DXManager.RadarTexture, Point.Empty, 0, new PointF((int)(x - 0.5F), (int)(y - 0.5F)), colour);
 
                 #region NPC Quest Icons
 
@@ -4916,7 +4902,7 @@ namespace Client.MirScenes.Dialogs
                 else
                     colour = Color.FromArgb(255, 0, 0);
 
-                DXManager.Sprite.Draw(DXManager.RadarTexture, new Rectangle(0, 0, 2, 2), Vector3.Zero, new Vector3((float)(x - 0.5), (float)(y - 0.5), 0.0F), colour);
+                DXManager.Sprite.Draw2D(DXManager.RadarTexture, Point.Empty, 0, new PointF((int)(x - 0.5F), (int)(y - 0.5F)), colour);
             }
         }
 
@@ -5221,7 +5207,7 @@ namespace Client.MirScenes.Dialogs
             Size = new Size(24, 61);
             Parent = parent;
 
-            Location = new Point(((Settings.ScreenWidth / 2) - (Size.Width / 2)) + 362, Settings.ScreenHeight - Size.Height - 77);
+            Location = new Point(Parent.Size.Width - 161, Parent.Size.Height - 138);
 
             Button1 = new MirButton //Skill
             {

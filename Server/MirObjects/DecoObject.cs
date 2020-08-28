@@ -28,7 +28,7 @@ namespace Server.MirObjects
             }
         }
 
-        public int Image;
+        public ushort Image;
 
         public override uint Health
         {

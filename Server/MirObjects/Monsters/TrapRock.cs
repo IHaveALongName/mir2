@@ -42,7 +42,6 @@ namespace Server.MirObjects.Monsters
             set
             {
                 if (_target != null && value != null) return;
-                if (_target != null && value == null) _target.InTrapRock = false;
                 _target = value;
 
                 if (Visible && value == null) Die();
