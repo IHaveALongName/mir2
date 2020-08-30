@@ -102,6 +102,7 @@ namespace Client.MirSounds
 
         public void SetVolume(int vol)
         {
+            if (_bufferList == null) return;
             if (vol <= -3000) vol = -10000;
 
             for (int i = 0; i < _bufferList.Count; i++)
