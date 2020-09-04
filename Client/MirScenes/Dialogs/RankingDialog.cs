@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 namespace Client.MirScenes.Dialogs
 {
+    //thx to Pete107/Petesn00beh for the base of this :p
     public class RankingDialog : MirImageControl
     {
         public MirButton AllButton, WarButton, WizButton, TaoButton, SinButton, ArchButton, Tab7, NextButton, PrevButton;
@@ -27,18 +28,18 @@ namespace Client.MirScenes.Dialogs
 
         public RankingDialog()
         {
-            Index = 728;
-            Library = Libraries.Title;
+            Index = 1329;
+            Library = Libraries.Prguse2;
             //Size = new Size(288, 324);
             Movable = true;
             Sort = true;
-            Location = new Point((Settings.ScreenWidth - Size.Width) / 2, (Settings.ScreenHeight - Size.Height) / 2);
+            Location = new Point((800 - Size.Width) / 2, (600 - Size.Height) / 2);
 
             CloseButton = new MirButton
             {
                 HoverIndex = 361,
                 Index = 360,
-                Location = new Point(300, 3),
+                Location = new Point(365, 3),
                 Library = Libraries.Prguse2,
                 Parent = this,
                 PressedIndex = 362,
