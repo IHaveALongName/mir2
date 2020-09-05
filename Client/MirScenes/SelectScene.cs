@@ -441,6 +441,7 @@ namespace Client.MirScenes
                     else if (Settings.Resolution == 1366)
                         CMain.SetResolution(1366, 768);
                     ActiveScene = new GameScene();
+                    DXManager.ResetDevice();
                     Dispose();
                     break;
             }
